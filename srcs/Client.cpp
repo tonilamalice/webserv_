@@ -179,8 +179,48 @@ void Client::serve_resource(struct client_info **client_list, struct client_info
 	if (strcmp(path, "") == 0) path = "index.html";
 	else if (strcmp(path, "root") == 0) path = "root.html";
 	else if (strcmp(path, "upload") == 0) path = "upload.html";
-	else 
-		path = "index.html";
+	else if (strcmp(path, "style.css") == 0) path = "style.css";
+	else if (strcmp(path, "upload.html") == 0) path = "upload.html";
+	else if (strcmp(path, "about.html") == 0) path = "about.html";
+	// else if (strcmp(path, "favicon.ico") == 0) path = "style.css";
+	else if (strcmp(path, "fileslist.html") == 0)
+	{
+		std::vector<std::string> files;
+		getFilesInDirectory(files);
+		std::ostringstream oss;
+		oss << "HTTP/1.1 200 OK\r\n";
+		oss << "Content-Type: text/html\r\n\r\n";
+		oss << "<!DOCTYPE html>\n";
+		oss << "<html lang=\"en\">\n";
+		oss << "<head>\n";
+		oss << "    <link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">\n"; // corrected stylesheet link
+		oss << "    <meta charset=\"UTF-8\">\n";
+		oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
+		oss << "</head>\n";
+		oss << "         <title>Welcome to our Web Server</title>\n";
+		oss << "<body>\n";
+		oss << "    <ul>\n";
+		
+		// Add a button for each file
+		for (std::vector<std::string>::const_iterator it = files.begin(); it != files.end(); ++it) {
+			oss << "        <li><button onclick=\"window.location.href = '/download?file=" << *it << "'\">" << *it << "</button></li>\n";
+
+		}
+		oss << "    </ul>\n";
+		oss << "</body>\n";
+		oss << "</html>\n";
+
+		std::string response = oss.str();
+		send(client->socket, response.c_str(), response.size(), 0);
+		drop_client(client_list, client);
+		return;
+	}
+
+	else
+	{
+		send_400(client_list, client);
+		return;
+	}
 	if (strlen(path) > 100) {
 		send_400(client_list, client);
 		return;
@@ -203,7 +243,8 @@ void Client::serve_resource(struct client_info **client_list, struct client_info
 	// size_t content_length = file.tellg();
 	file.seekg(0, std::ios::beg);
 
-	// const char *content_type = Utils::get_content_type(path);
+	 const char *content_type = Utils::get_content_type(path);
+	 std::cout << content_type << std::endl;
 	// std::ostringstream oss;
 
 	std::vector<std::string> files;
@@ -211,10 +252,13 @@ void Client::serve_resource(struct client_info **client_list, struct client_info
 
 	std::ostringstream oss;
     oss << "HTTP/1.1 200 OK\r\n";
-    oss << "Content-Type: text/html\r\n\r\n";
+	oss << "Content-Type: ";
+	oss << content_type;
+	oss << "\r\n\r\n";
+    // oss << "Content-Type: text/html\r\n\r\n";
     oss << "<!DOCTYPE html>\n";
     oss << "<html lang=\"en\">\n";
-    oss << "<head>\n";
+    // oss << "<head>\n";
     // oss << "    <meta charset=\"UTF-8\">\n";
     // oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
     // oss << "    <title>Movies of the month</title>\n";

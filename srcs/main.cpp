@@ -5,7 +5,8 @@ int main()
 {
 	Client connection;
 	SocketCreation socket;
-	int server = socket.create_socket("10.2.7.4", "8082");
+	int server = socket.create_socket(0, "8082");
+	
 	struct Client::client_info *client_list = NULL;
 
 	while(1) 
