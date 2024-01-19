@@ -182,8 +182,10 @@ void Client::serve_resource(struct client_info **client_list, struct client_info
 	else if (strcmp(path, "style.css") == 0) path = "style.css";
 	else if (strcmp(path, "upload.html") == 0) path = "upload.html";
 	else if (strcmp(path, "about.html") == 0) path = "about.html";
+	else if (strcmp(path, "delete") == 0) path = "delete.html";
+	else if (strcmp(path, "delete.html") == 0) path = "delete.html";
 	// else if (strcmp(path, "favicon.ico") == 0) path = "style.css";
-	else if (strcmp(path, "fileslist.html") == 0)
+	else if (strcmp(path, "fileslist.html") == 0 || strcmp(path, "fileslist") == 0 )
 	{
 		std::vector<std::string> files;
 		getFilesInDirectory(files);
@@ -193,6 +195,7 @@ void Client::serve_resource(struct client_info **client_list, struct client_info
 		oss << "<!DOCTYPE html>\n";
 		oss << "<html lang=\"en\">\n";
 		oss << "<head>\n";
+		oss << "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js\"></script>\n";
 		oss << "    <link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\">\n"; // corrected stylesheet link
 		oss << "    <meta charset=\"UTF-8\">\n";
 		oss << "    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n";
@@ -202,13 +205,29 @@ void Client::serve_resource(struct client_info **client_list, struct client_info
 		oss << "    <ul>\n";
 		
 		// Add a button for each file
-		for (std::vector<std::string>::const_iterator it = files.begin(); it != files.end(); ++it) {
-			oss << "        <li><button onclick=\"window.location.href = '/download?file=" << *it << "'\">" << *it << "</button></li>\n";
-
+		int index = 0;
+		for (std::vector<std::string>::const_iterator it = files.begin(); it != files.end(); ++it, ++index) {
+			oss << "        <li><button onclick=\"window.location.href = '/download?file=" << *it << "'\">" << *it << "</button>\n";
+			oss << "        <button id=\"deleteButton" << index << "\" onclick=\"deleteFile('" << *it << "')\" style=\"background-color: red; color: white; font-size: 0.1em; margin-left: 4px;\">Delete</button></li>\n";
+			// oss << "        <button id=\"deleteButton" << index << "\" onclick=\"deleteFile('" << *it << "')\">Delete</button></li>\n";
+			oss << "    <script>\n";
+			oss << "        $(document).ready(function() {\n";
+			oss << "            $('#deleteButton" << index << "').click(function() {\n";
+			oss << "                $.ajax({\n";
+			oss << "                    url: '/uploads/" << *it << "', // replace 'filename' with the name of the file you want to delete\n";
+			oss << "                    type: 'DELETE',\n";
+			oss << "                    success: function(result) {\n";
+			oss << "                        window.location.href = window.location.href;\n";
+			// oss << "                        location.reload(true); // Reload the page\n";
+			oss << "                    }\n";
+			oss << "                });\n";
+			oss << "            });\n";
+			oss << "        });\n";
+			oss << "    </script>\n";
 		}
-		oss << "    </ul>\n";
 		oss << "</body>\n";
 		oss << "</html>\n";
+	
 
 		std::string response = oss.str();
 		send(client->socket, response.c_str(), response.size(), 0);
@@ -417,5 +436,25 @@ void Client::postmethod(const char* request, struct client_info **client_list, s
 
         Utils parsing(requestBodyStr, boundary);
         parsing.parseMultipartFormData();
-		drop_client(client_list, client);
+		serve_resource(client_list, client, "fileslist.html");
+		// drop_client(client_list, client);
+}
+
+void Client::deletemethod(std::string filePath, struct client_info **client_list, struct client_info *client)
+{
+	filePath = rootDirectory + "/" + filePath;
+	char *path = (char*)filePath.c_str();
+	std::cout << "path is: " << path << std::endl;
+
+
+    if (std::remove(path) != 0)
+    {
+        std::cout << "can't delete" << std::endl;// Handle error, file couldn't be deleted
+    }
+    else
+    {
+       std::cout << "ok deleted" << std::endl; // File successfully deleted
+    }
+	serve_resource(client_list, client, "fileslist.html");
+	return;
 }

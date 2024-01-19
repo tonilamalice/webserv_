@@ -45,7 +45,9 @@ public:
 	std::ostringstream sendFileList();
 	void downloadFile(const std::string& filename,struct client_info **client_list, struct client_info *client); 
 	void postmethod(const char* request, struct client_info **client_list, struct client_info *client);
+	void deletemethod(std::string filePath, struct client_info **client_list, struct client_info *client);
 };
+
 
 
 

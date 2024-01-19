@@ -66,11 +66,25 @@ int main()
 						requestStream >> method >> path >> version;
 						// Trim leading '/' from the path
 						path = path.substr(1);
-
+						std::cout << "Method: " << method << std::endl;
 						if (method == "POST") 
 						{
+							
 							std::cout << "POST request" << std::endl;
 							connection.postmethod(request, &client_list, client);
+						}
+						else if (method == "DELETE")
+						{
+						std::string filename;
+						size_t lastSlash = path.find_last_of("/");
+						if (lastSlash != std::string::npos) {
+							filename = path.substr(lastSlash + 1);
+						} else {
+							filename = path;
+						}
+							std::cout << "DELETE request" << std::endl;
+							std::cout << "Filename: " << filename << std::endl;
+							connection.deletemethod(filename, &client_list, client);
 						}
 						else if (method == "GET") 
 						{

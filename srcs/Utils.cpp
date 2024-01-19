@@ -1,63 +1,65 @@
 #include "Utils.hpp"
 
 Utils::Utils(const std::string &requestData, const std::string &boundary)
-        : requestData_(requestData), boundary_(boundary) 
-    {
-        // Extract boundary from Content-Type header
-        size_t contentTypePos = requestData_.find("Content-Type:");
-        if (contentTypePos != std::string::npos)
-        {
-            size_t boundaryPos = requestData_.find("boundary=", contentTypePos);
-            if (boundaryPos != std::string::npos)
-            {
-                size_t boundaryEnd = requestData_.find("\r\n", boundaryPos);
-                if (boundaryEnd != std::string::npos)
-                {
-                    boundary_ = requestData_.substr(boundaryPos + 9, boundaryEnd - (boundaryPos + 9));
-                }
-            }
-        }
-    }
-    // Function to parse multipart form data
-    void Utils::parseMultipartFormData() {
-        // Find the boundary in the request data
+		: requestData_(requestData), boundary_(boundary) 
+	{
+		// Extract boundary from Content-Type header
+		size_t contentTypePos = requestData_.find("Content-Type:");
+		if (contentTypePos != std::string::npos)
+		{
+			size_t boundaryPos = requestData_.find("boundary=", contentTypePos);
+			if (boundaryPos != std::string::npos)
+			{
+				size_t boundaryEnd = requestData_.find("\r\n", boundaryPos);
+				if (boundaryEnd != std::string::npos)
+				{
+					boundary_ = requestData_.substr(boundaryPos + 9, boundaryEnd - (boundaryPos + 9));
+				}
+			}
+		}
+	}
+	// Function to parse multipart form data
+	void Utils::parseMultipartFormData() {
+		// Find the boundary in the request data
 		std::cout << "request data: " << requestData_ << std::endl;
-        size_t boundaryPos = requestData_.find("boundary=");
-        // if (boundaryPos == std::string::npos) {
-        //     std::cerr << "Error: Boundary not found in request data." << std::endl;
-        //     return;
-        // }
+		size_t boundaryPos = requestData_.find("boundary=");
+		// if (boundaryPos == std::string::npos) {
+		//     std::cerr << "Error: Boundary not found in request data." << std::endl;
+		//     return;
+		// }
 
-        std::string boundary = requestData_.substr(boundaryPos + 9);
+		std::string boundary = requestData_.substr(boundaryPos + 9);
 
-        // Split the request data into parts using the boundary
-        size_t startPos = requestData_.find("\r\n\r\n") + 4;
-        size_t endPos = requestData_.find("--" + boundary, startPos);
+		// Split the request data into parts using the boundary
+		size_t startPos = requestData_.find("\r\n\r\n") + 4;
+		size_t endPos = requestData_.find("--" + boundary, startPos);
 
-        // if (startPos == std::string::npos || endPos == std::string::npos) {
-        //     std::cerr << "Error: Invalid request data format." << std::endl;
-        //     return;
-        // }
+		// if (startPos == std::string::npos || endPos == std::string::npos) {
+		//     std::cerr << "Error: Invalid request data format." << std::endl;
+		//     return;
+		// }
 
-        std::string fileData = requestData_.substr(startPos, endPos - startPos - 2);
+		std::string fileData = requestData_.substr(startPos, endPos - startPos - 2);
 
-        // Extract filename from the Content-Disposition header
-        size_t filenamePos = requestData_.find("filename=\"");
-        size_t filenameEndPos = requestData_.find("\"", filenamePos + 10);
+		// Extract filename from the Content-Disposition header
+		size_t filenamePos = requestData_.find("filename=\"");
+		size_t filenameEndPos = requestData_.find("\"", filenamePos + 10);
 
-        std::string filename = requestData_.substr(filenamePos + 10, filenameEndPos - filenamePos - 10);
+		std::string filename = requestData_.substr(filenamePos + 10, filenameEndPos - filenamePos - 10);
 
-    // Save file data to a file
-        std::ofstream outFile(filename.c_str(), std::ios::binary);
-        if (!outFile) {
-            std::cerr << "Error opening file for writing: " << filename << std::endl;
-            return;
-        }
+		// Save file data to a file in the "uploads" folder
+		std::string filePath = "uploads/" + filename;
+		std::ofstream outFile(filePath.c_str(), std::ios::binary);
+		if (!outFile) {
+			std::cerr << "Error opening file for writing: " << filePath << std::endl;
+			return;
+		}
 
-        outFile.write(fileData.c_str(), fileData.size());
-        outFile.close();
+		outFile.write(fileData.c_str(), fileData.size());
+		outFile.close();
 
         std::cout << "File saved as: " << filename << std::endl;
+		
     }
 
 	std::string Utils::urlDecode(std::string str)
