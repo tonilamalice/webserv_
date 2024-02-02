@@ -33,10 +33,11 @@ class SocketCreation
 			int socket_listen;
 			char* host;
 			char* port;
+		
 	public:
 			//Constructor
 			SocketCreation();
-			int create_socket(const char* host, const char* port);
+			int create_socket(const char* host,const char* port);
 			SocketCreation(const SocketCreation &copy);
 			SocketCreation	&operator=(SocketCreation &copy);
 			

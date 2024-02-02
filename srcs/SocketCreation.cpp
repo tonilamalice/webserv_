@@ -11,7 +11,7 @@ SocketCreation::SocketCreation()
 	// this->port = NULL;
 }
 
-int SocketCreation::create_socket(const char* host, const char* port)
+int SocketCreation::create_socket(const char* host,const  char* port)
 {
 	std::cout << "Configuring local address..." << std::endl;
 	this->host = (char*)host;

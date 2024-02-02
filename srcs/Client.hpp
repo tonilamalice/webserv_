@@ -3,6 +3,7 @@
 
 #include "Utils.hpp"
 #include "SocketCreation.hpp"
+#include "server.hpp"
 #include <map>
 #include <unistd.h>
 #include <stdio.h>
@@ -16,7 +17,9 @@ class Utils;
 class Client : public SocketCreation
 {
 private:
+
 public:
+	std::map<size_t, Server>  &getServers(void) ;
 	std::string rootDirectory;
 	std::string rootupdated;
 	Client();

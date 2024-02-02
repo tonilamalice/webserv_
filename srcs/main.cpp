@@ -1,23 +1,48 @@
 #include"Client.hpp"
 #include"SocketCreation.hpp"
+#include "Parsing.hpp"
+#include "Conf.hpp"
 
 int main()
 {
+	Config conf;
 	Client connection;
+	parseConfiguration("./conf/default.conf", conf);
+	std::map<size_t, Server> servers = conf.getServers();
+	std::map<size_t, Server>::iterator it = servers.begin();
+	while (it != servers.end())
+	{
+		
+		std::cout << "SERVERS !!!!!!!!!!!!!!!!!!!"  << it->second << std::endl;
+		it++;
+	}
 	SocketCreation socket;
-	int server = socket.create_socket(0, "8082");
+	int server2[servers.size()];
+	size_t i = 0;
+	for (it = servers.begin(); it != servers.end(); it++)
+	{
+		server2[i] = socket.create_socket(it->second.getIpAddress().c_str(), (it->second.getPortString().c_str()));
+		i++;
+	}
+
 	
 	struct Client::client_info *client_list = NULL;
+	std::cout << "server size is " << servers.size() << std::endl;
 
-	while(1) 
+
+
+	while(1)
 	{
-		fd_set reads;
-		reads = connection.wait_on_clients(&client_list, server);
-
-		if (FD_ISSET(server, &reads)) 
+	
+		i = 0;
+		fd_set reads[servers.size() + 1];
+		while(i < servers.size())
+		{
+			reads[i] = connection.wait_on_clients(&client_list, server2[i]);
+			if (FD_ISSET(server2[i], &reads[i])) 
 		{
 			struct Client::client_info *client = connection.get_client(&client_list, -1);
-			client->socket = accept(server, (struct sockaddr*) &(client->address), &(client->address_length));
+			client->socket = accept(server2[i], (struct sockaddr*) &(client->address), &(client->address_length));
 			if (client->socket < 0) 
 			{
 				fprintf(stderr, "accept() failed. (%d)\n", errno);
@@ -30,7 +55,7 @@ int main()
 		while(client) 
 		{
 			struct Client::client_info *next = client->next;
-			if (FD_ISSET(client->socket, &reads)) 
+			if (FD_ISSET(client->socket, &reads[i])) 
 			{
 				if (MAX_REQUEST_SIZE == client->received) 
 				{
@@ -136,9 +161,16 @@ int main()
 			}
 			client = next;
 		}
+		i++;
+		}
+
+		
 	}
 	std::cout << "\nClosing socket..." << std::endl;
-	close(server);
+	for (size_t i = 0; i < servers.size(); i++)
+	{
+		close(server2[i]);
+	}
 	std::cout << "Finished." << std::endl;
 	return 0;
 }

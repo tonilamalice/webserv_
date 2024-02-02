@@ -86,21 +86,63 @@ fd_set Client::wait_on_clients(struct client_info **client_list, int server)
 
 void Client::send_400(struct client_info **client_list, struct client_info *client)
 {
-	const char *c400 = "HTTP/1.1 400 Bad Request\r\n"
-		"Connection: close\r\n"
-		"Content-Length: 11\r\n\r\nBad Request";
-	send(client->socket, c400, strlen(c400), 0);
+	
+	std::ifstream file("400.html", std::ios::binary);
+	if (!file) {
+		send_500(client_list, client);
+		return;
+	}
+	 const char *content_type = Utils::get_content_type("400.html");
+	std::vector<std::string> files;
+	getFilesInDirectory(files);
+	std::ostringstream oss;
+    oss << "HTTP/1.1 200 OK\r\n";
+	oss << "Content-Type: ";
+	oss << content_type;
+	oss << "\r\n\r\n";
+    oss << "<!DOCTYPE html>\n";
+    oss << "<html lang=\"en\">\n";
+	std::string response = oss.str();
+	char buffer[1024];
+	send(client->socket, response.c_str(), response.size(), 0);
+	while (file.read(buffer, sizeof(buffer)).gcount() > 0) {
+		send(client->socket, buffer, file.gcount(), 0);
+	}
+
+	file.close();
 	drop_client(client_list, client);
 }
 
+
 void Client::send_404(struct client_info **client_list, struct client_info *client)
 {
-	const char *c404 = "HTTP/1.1 404 Not Found\r\n"
-		"Connection: close\r\n"
-		"Content-Length: 9\r\n\r\nNot Found";
-	send(client->socket, c404, strlen(c404), 0);
+	
+	std::ifstream file("404.html", std::ios::binary);
+	if (!file) {
+		send_500(client_list, client);
+		return;
+	}
+	 const char *content_type = Utils::get_content_type("404.html");
+	std::vector<std::string> files;
+	getFilesInDirectory(files);
+	std::ostringstream oss;
+    oss << "HTTP/1.1 200 OK\r\n";
+	oss << "Content-Type: ";
+	oss << content_type;
+	oss << "\r\n\r\n";
+    oss << "<!DOCTYPE html>\n";
+    oss << "<html lang=\"en\">\n";
+	std::string response = oss.str();
+	char buffer[1024];
+	send(client->socket, response.c_str(), response.size(), 0);
+	while (file.read(buffer, sizeof(buffer)).gcount() > 0) {
+		send(client->socket, buffer, file.gcount(), 0);
+	}
+
+	file.close();
 	drop_client(client_list, client);
 }
+
 void Client::send_500(struct client_info **client_list, struct client_info *client)
 {
 	const char *c500 = "HTTP/1.1 500 Internal Server Error\r\n"
